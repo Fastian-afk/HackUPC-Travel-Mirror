@@ -150,8 +150,18 @@ const DestinationResultCard = ({ destination, featured = false, onRefine, imageS
 
         <Button
           variant="contained"
-          onClick={() => onRefine(name)}
-          sx={{ alignSelf: 'flex-start', minHeight: 36, px: 2.2, py: 0.8, fontSize: '0.86rem' }}
+          onClick={() => onRefine?.(name)}
+          sx={{ 
+            alignSelf: 'flex-start', 
+            minHeight: 36, 
+            px: 2.2, 
+            py: 0.8, 
+            fontSize: '0.86rem',
+            background: 'linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+            },
+          }}
         >
           Explore →
         </Button>
@@ -160,7 +170,7 @@ const DestinationResultCard = ({ destination, featured = false, onRefine, imageS
   );
 };
 
-const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => {
+const ResultsSection = ({ query, results, interpretedTags, error, onReset, onRefine }) => {
   if (!results || results.length === 0) {
     return null;
   }
@@ -172,8 +182,9 @@ const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => 
   return (
     <Box
       sx={{
-          py: { xs: 3, md: 4 },
-        background: 'linear-gradient(180deg, rgba(250,250,250,0.95) 0%, rgba(255,255,255,0.98) 100%)',
+        py: { xs: 3, md: 4 },
+        // CHANGED: Background to match logo's light blue
+        background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
         transition: 'background 0.3s ease',
       }}
     >
@@ -192,14 +203,24 @@ const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => 
             variant="outlined"
             startIcon={<Refresh />}
             onClick={onReset}
-            sx={{ borderRadius: '999px', px: 2.4, py: 0.6 }}
+            sx={{ 
+              borderRadius: '999px', 
+              px: 2.4, 
+              py: 0.6,
+              borderColor: '#3b82f6',
+              color: '#2563eb',
+              '&:hover': {
+                borderColor: '#1e40af',
+                backgroundColor: 'rgba(37, 99, 235, 0.04)',
+              },
+            }}
           >
             Start Over
           </Button>
         </Box>
 
         <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
-          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1.5 }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1.5, color: '#0f172a' }}>
             Based on your search: "{query}"
           </Typography>
 
@@ -247,7 +268,12 @@ const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => 
 
         <Box sx={{ mb: { xs: 2.5, lg: 1.5 }, display: 'flex', justifyContent: 'center' }}>
           <Box sx={{ width: '100%', maxWidth: { xs: 640, lg: 780 } }}>
-            <DestinationResultCard destination={featuredResult} featured imageSeed={1} />
+            <DestinationResultCard 
+              destination={featuredResult} 
+              featured 
+              imageSeed={1} 
+              onRefine={onRefine}
+            />
           </Box>
         </Box>
 
@@ -263,7 +289,11 @@ const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => 
           >
             {firstPair.map((destination, index) => (
               <Box key={`pair-one-${index}`} sx={{ display: 'flex', minWidth: 0, alignItems: 'stretch' }}>
-                <DestinationResultCard destination={destination} imageSeed={index + 2} />
+                <DestinationResultCard 
+                  destination={destination} 
+                  imageSeed={index + 2} 
+                  onRefine={onRefine}
+                />
               </Box>
             ))}
           </Box>
@@ -278,7 +308,11 @@ const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => 
           >
             {secondPair.map((destination, index) => (
               <Box key={`pair-two-${index}`} sx={{ display: 'flex', minWidth: 0, alignItems: 'stretch' }}>
-                <DestinationResultCard destination={destination} imageSeed={index + 4} />
+                <DestinationResultCard 
+                  destination={destination} 
+                  imageSeed={index + 4} 
+                  onRefine={onRefine}
+                />
               </Box>
             ))}
           </Box>

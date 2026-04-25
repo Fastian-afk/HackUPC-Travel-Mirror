@@ -14,6 +14,7 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
   const theme = useTheme();
   const [isHovered, setIsHovered] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const isFeatured = variant === 'featured';
 
   const handleLikeClick = (e) => {
@@ -34,9 +35,8 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
         height: '100%',
         display: 'flex',
         flexDirection: { xs: 'column', sm: isFeatured ? 'row' : 'column' },
-        // Featured card specific sizing - MAKES IT LARGER
         ...(isFeatured && {
-          minHeight: { xs: 'auto', sm: '400px', md: '460px' },  // ADDED - controls card height
+          minHeight: { xs: 'auto', sm: '400px', md: '460px' },
         }),
         borderRadius: '24px',
         overflow: 'hidden',
@@ -51,16 +51,18 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
         backgroundColor: '#ffffff',
       }}
     >
-      {/* Image Container - LARGER for featured card */}
+      {/* Image Container */}
       <Box
         sx={{
           position: 'relative',
           overflow: 'hidden',
-          width: isFeatured ? { xs: '100%', sm: '50%' } : '100%',  // CHANGED: 45% → 50%
-          height: isFeatured ? { xs: '280px', sm: 'auto' } : '180px',  // CHANGED: 200px → 280px
+          width: isFeatured ? { xs: '100%', sm: '50%' } : '100%',
+          aspectRatio: isFeatured ? { xs: '16/9', sm: '4/3' } : '16/9',
           flexShrink: 0,
+          backgroundColor: '#e2e8f0',
           ...(isFeatured && {
-            minHeight: { sm: '400px', md: '460px' },  // ADDED - matches card height
+            minHeight: { sm: '400px', md: '460px' },
+            aspectRatio: { sm: 'auto' },
           }),
         }}
       >
@@ -68,12 +70,14 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
           component="img"
           image={destination.image}
           alt={destination.name}
+          onLoad={() => setImageLoaded(true)}
           sx={{
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            transition: 'transform 0.4s ease-out',
+            transition: 'transform 0.4s ease-out, opacity 0.3s ease-in',
             transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+            opacity: imageLoaded ? 1 : 0,
           }}
         />
 
@@ -111,26 +115,17 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
               transform: 'scale(1.1)',
             },
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            zIndex: 2,
           }}
         >
           {isLiked ? (
-            <Favorite
-              sx={{
-                fontSize: '18px',
-                color: '#ef4444',
-              }}
-            />
+            <Favorite sx={{ fontSize: '18px', color: '#ef4444' }} />
           ) : (
-            <FavoriteBorder
-              sx={{
-                fontSize: '18px',
-                color: '#cbd5e1',
-              }}
-            />
+            <FavoriteBorder sx={{ fontSize: '18px', color: '#cbd5e1' }} />
           )}
         </Box>
 
-        {/* Featured Badge for top card */}
+        {/* Featured Badge */}
         {isFeatured && (
           <Box
             sx={{
@@ -145,6 +140,7 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
               fontSize: '0.8rem',
               fontWeight: 600,
               letterSpacing: '0.5px',
+              zIndex: 2,
             }}
           >
             BEST MATCH
@@ -152,15 +148,19 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
         )}
       </Box>
 
-      {/* Content - LARGER for featured card */}
+      {/* Content - WITH PROFESSIONAL TEXT WRAPPING */}
       <CardContent
         sx={{
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',  // ADDED - centers content vertically
-          p: isFeatured ? { xs: 2.5, sm: 4 } : 2,  // CHANGED: 2.5 → 4 for desktop
-          width: isFeatured ? { xs: '100%', sm: '50%' } : '100%',  // CHANGED: 55% → 50%
+          justifyContent: 'center',
+          p: isFeatured ? { xs: 2.5, sm: 4 } : 2,
+          width: isFeatured ? { xs: '100%', sm: '50%' } : '100%',
+          minWidth: 0,
+          // Professional text wrapping
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word',
         }}
       >
         {/* Title with Location */}
@@ -170,42 +170,57 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
             sx={{
               fontWeight: 700,
               color: '#0f172a',
-              fontSize: isFeatured ? { xs: '1.4rem', sm: '1.8rem' } : '1rem',  // CHANGED: 1.2rem → 1.8rem
-              lineHeight: 1.2,
+              fontSize: isFeatured ? { xs: '1.4rem', sm: '1.8rem' } : '1rem',
+              lineHeight: 1.3,
               mb: 1,
+              // Professional text wrapping for long titles
+              wordBreak: 'break-word',
+              whiteSpace: 'normal',
+              overflowWrap: 'break-word',
+              hyphens: 'auto',
             }}
           >
             {destination.name}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <LocationOn sx={{ fontSize: isFeatured ? '20px' : '16px', color: '#2563eb' }} />
+            <LocationOn sx={{ fontSize: isFeatured ? '20px' : '16px', color: '#2563eb', flexShrink: 0 }} />
             <Typography
               variant="body2"
-              sx={{ color: '#64748b', fontSize: isFeatured ? '1rem' : '0.8rem' }}
+              sx={{
+                color: '#64748b',
+                fontSize: isFeatured ? '1rem' : '0.8rem',
+                wordBreak: 'break-word',
+                whiteSpace: 'normal',
+              }}
             >
               {destination.country}
             </Typography>
           </Box>
         </Box>
 
-        {/* Description - MORE LINES for featured card */}
+        {/* Description - Professional text wrapping with ellipsis */}
         <Typography
           variant="body2"
           sx={{
             color: '#475569',
             mb: 2.5,
-            lineHeight: 1.5,
+            lineHeight: 1.6,
             display: '-webkit-box',
-            WebkitLineClamp: isFeatured ? 3 : 2,  // CHANGED: 2 → 3 lines for featured
+            WebkitLineClamp: isFeatured ? 3 : 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-            fontSize: isFeatured ? '0.95rem' : '0.8rem',  // CHANGED: bigger font for featured
+            textOverflow: 'ellipsis',
+            fontSize: isFeatured ? '0.95rem' : '0.8rem',
+            // Professional text wrapping
+            wordBreak: 'break-word',
+            whiteSpace: 'normal',
+            overflowWrap: 'break-word',
           }}
         >
           {destination.description}
         </Typography>
 
-        {/* Tags - MORE TAGS for featured card */}
+        {/* Tags - Responsive wrapping */}
         <Box
           sx={{
             display: 'flex',
@@ -226,6 +241,15 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
                 fontSize: isFeatured ? '0.8rem' : '0.7rem',
                 height: isFeatured ? '32px' : '24px',
                 borderRadius: isFeatured ? '16px' : '12px',
+                // Professional chip text handling
+                maxWidth: '100%',
+                '& .MuiChip-label': {
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  px: 1.5,
+                },
                 '&:hover': {
                   backgroundColor: '#e0e7ff',
                 },
