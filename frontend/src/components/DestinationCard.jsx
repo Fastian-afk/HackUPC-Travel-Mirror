@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardMedia,
@@ -10,6 +11,7 @@ import {
 import { LocationOn, FavoriteBorder, Favorite } from '@mui/icons-material';
 
 const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -21,12 +23,18 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
     if (onLike) onLike(destination);
   };
 
+  const handleCardClick = () => {
+    // Navigate to detail page with destination data
+    navigate('/destination', { state: { destination } });
+  };
+
   // ========== FEATURED CARD ==========
   if (isFeatured) {
     return (
       <Card
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={handleCardClick}
         sx={{
           width: '100%',
           display: 'flex',
@@ -158,6 +166,7 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
     <Card
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleCardClick}
       sx={{
         width: '100%',
         borderRadius: '14px',
