@@ -54,7 +54,7 @@ const DestinationResultCard = ({ destination, featured = false, onRefine, imageS
   const priceLabel = destination?.price ? `From $${destination.price}` : null;
 
   return (
-    <Card
+      <Card
       sx={{
         height: '100%',
         borderRadius: '28px',
@@ -72,9 +72,10 @@ const DestinationResultCard = ({ destination, featured = false, onRefine, imageS
       <Box
         sx={{
           width: featured ? '100%' : '42%',
-          minHeight: featured
-            ? { xs: 150, sm: 165, md: 180 }
-            : { xs: 130, sm: 150, md: 160 },
+          height: featured
+            ? { xs: 180, sm: 220, md: 260 }
+            : { xs: 160, sm: 180, md: 200 },
+          minHeight: featured ? { xs: 180, sm: 220, md: 260 } : undefined,
           flexShrink: 0,
           position: 'relative',
         }}
@@ -83,7 +84,7 @@ const DestinationResultCard = ({ destination, featured = false, onRefine, imageS
           primarySrc={imageUrl}
           fallbackSrc={fallbackImageUrl}
           alt={name}
-          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
         />
 
         {featured && (
@@ -169,7 +170,13 @@ const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => 
   const secondPair = results.slice(3, 5);
 
   return (
-    <Box sx={{ py: { xs: 5, md: 6 }, backgroundColor: '#faf9f6' }}>
+    <Box
+      sx={{
+          py: { xs: 3, md: 4 },
+        background: 'linear-gradient(180deg, rgba(250,250,250,0.95) 0%, rgba(255,255,255,0.98) 100%)',
+        transition: 'background 0.3s ease',
+      }}
+    >
       <Container maxWidth="lg">
         <Box
           sx={{
@@ -249,12 +256,13 @@ const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => 
             sx={{
               display: 'grid',
               gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              gridAutoRows: '1fr',
               gap: { xs: 1.6, lg: 1.25 },
               mb: { xs: 1.6, lg: 1.25 },
             }}
           >
             {firstPair.map((destination, index) => (
-              <Box key={`pair-one-${index}`} sx={{ display: 'flex', minWidth: 0 }}>
+              <Box key={`pair-one-${index}`} sx={{ display: 'flex', minWidth: 0, alignItems: 'stretch' }}>
                 <DestinationResultCard destination={destination} imageSeed={index + 2} />
               </Box>
             ))}
@@ -264,11 +272,12 @@ const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => 
             sx={{
               display: 'grid',
               gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              gridAutoRows: '1fr',
               gap: { xs: 1.6, lg: 1.25 },
             }}
           >
             {secondPair.map((destination, index) => (
-              <Box key={`pair-two-${index}`} sx={{ display: 'flex', minWidth: 0 }}>
+              <Box key={`pair-two-${index}`} sx={{ display: 'flex', minWidth: 0, alignItems: 'stretch' }}>
                 <DestinationResultCard destination={destination} imageSeed={index + 4} />
               </Box>
             ))}

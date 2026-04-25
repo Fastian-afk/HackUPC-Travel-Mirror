@@ -33,26 +33,15 @@ const SkeletonCard = ({ featured = false, query = '', seed = 1 }) => {
         flexDirection: featured ? 'column' : 'row',
       }}
     >
-      <Box sx={{ position: 'relative', width: featured ? '100%' : '42%', flexShrink: 0 }}>
-        <CardMedia
-          component="img"
-          image={buildLoadingImageUrl(query, seed)}
-          alt="Loading destination preview"
-          sx={{
-            width: '100%',
-            aspectRatio: featured ? '16 / 6' : '1 / 1',
-            objectFit: 'cover',
-            filter: 'saturate(0.85) brightness(0.9)',
-          }}
-        />
+      <Box sx={{ width: featured ? '100%' : '42%', flexShrink: 0 }}>
         <Skeleton
           variant="rectangular"
-          width="100%"
           animation="wave"
           sx={{
-            position: 'absolute',
-            inset: 0,
-            backgroundColor: 'rgba(226, 232, 240, 0.5)',
+            width: '100%',
+            height: featured ? { xs: 180, sm: 220, md: 260 } : { xs: 160, sm: 180, md: 200 },
+            backgroundColor: 'rgba(226, 232, 240, 0.6)',
+            display: 'block',
           }}
         />
       </Box>
@@ -72,8 +61,10 @@ const LoadingState = ({ query }) => {
   return (
     <Box
       sx={{
+        minHeight: { xs: 'calc(100vh - 72px)', md: 'calc(100vh - 84px)' },
         py: { xs: 4, lg: 3 },
-        backgroundColor: theme.palette.background.default,
+        background: 'linear-gradient(180deg, rgba(248,250,252,0.95) 0%, rgba(255,255,255,0.98) 100%)',
+        transition: 'background 0.3s ease, opacity 0.25s ease',
       }}
     >
       <Container maxWidth="lg">

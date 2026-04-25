@@ -21,7 +21,10 @@ const HeroInput = ({ onSubmit, isLoading, query, setQuery, error }) => {
   return (
     <Box
       sx={{
-        minHeight: { xs: '70vh', md: '85vh' },
+        minHeight: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' },
+        mt: 0,
+        pt: 0,
+        pb: { xs: 5, md: 8 },
         display: 'flex',
         alignItems: 'center',
         color: '#ffffff',
@@ -39,16 +42,19 @@ const HeroInput = ({ onSubmit, isLoading, query, setQuery, error }) => {
       <Container maxWidth="md">
         <Box
           sx={{
+            maxWidth: 840,
+            mx: 'auto',
             textAlign: 'center',
             animation: 'fadeIn 0.9s ease-out',
           }}
         >
           <Typography
-            variant="h1"
+            variant="h2"
             sx={{
               color: '#ffffff',
-              textShadow: '0 12px 36px rgba(15, 23, 42, 0.4)',
-              mb: 2,
+              textShadow: '0 10px 28px rgba(15, 23, 42, 0.35)',
+              mb: 1.5,
+              fontWeight: 700,
             }}
           >
             Your Dream Trip Starts Here
@@ -56,9 +62,9 @@ const HeroInput = ({ onSubmit, isLoading, query, setQuery, error }) => {
           <Typography
             variant="h5"
             sx={{
-              color: 'rgba(255, 255, 255, 0.9)',
+              color: 'rgba(255, 255, 255, 0.92)',
               fontWeight: 500,
-              mb: 4,
+              mb: 3,
             }}
           >
             Tell us what you love — we&apos;ll find the perfect escape.
@@ -70,13 +76,13 @@ const HeroInput = ({ onSubmit, isLoading, query, setQuery, error }) => {
             sx={{
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
-              gap: { xs: 2, sm: 1.5 },
+              gap: { xs: 1.25, sm: 1.25 },
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: '#ffffff',
               borderRadius: '999px',
-              p: { xs: 1.5, sm: 1 },
-              boxShadow: '0 24px 60px rgba(15, 23, 42, 0.25)',
+              p: { xs: 1.1, sm: 1 },
+              boxShadow: '0 18px 48px rgba(15, 23, 42, 0.18)',
               animation: 'slideUp 0.9s ease-out 0.2s both',
             }}
           >
@@ -87,8 +93,8 @@ const HeroInput = ({ onSubmit, isLoading, query, setQuery, error }) => {
               onChange={(e) => setQuery(e.target.value)}
               disabled={isLoading}
               sx={{
-                px: { xs: 2, sm: 3 },
-                py: { xs: 1.25, sm: 1 },
+                px: { xs: 2, sm: 2.5 },
+                py: { xs: 1.1, sm: 1 },
                 fontSize: '1rem',
                 color: '#0f172a',
               }}
@@ -101,11 +107,11 @@ const HeroInput = ({ onSubmit, isLoading, query, setQuery, error }) => {
               variant="contained"
               disabled={isLoading || !query.trim()}
               sx={{
-                px: { xs: 4, sm: 4.5 },
-                py: 1.5,
+                px: { xs: 3.5, sm: 4 },
+                py: 1.1,
                 whiteSpace: 'nowrap',
                 borderRadius: '999px',
-                minWidth: { xs: '100%', sm: '200px' },
+                minWidth: { xs: '100%', sm: '190px' },
                 background: 'linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)',
                 boxShadow: '0 16px 30px rgba(37, 99, 235, 0.35)',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',

@@ -12,7 +12,7 @@ import logoPng from '../assets/logo.png';
 const Navbar = () => {
   const [logoError, setLogoError] = useState(false);
   const [logoIndex, setLogoIndex] = useState(0);
-  const logoSources = [logoSvg, logoPng];
+  const logoSources = [logoPng, logoSvg]; // prefer the PNG (likely higher-res / exact crop) and fall back to SVG
   const logoSrc = logoSources[logoIndex];
 
   return (
@@ -20,71 +20,63 @@ const Navbar = () => {
       position="sticky"
       elevation={0}
       sx={{
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(226, 232, 240, 0.6)',
-        py: { xs: 1, sm: 1.5 },
+        top: 0,
+        left: 0,
+        right: 0,
+        width: '100%',
+        zIndex: 1200,
+        backgroundColor: 'white',
+        boxShadow: 'none',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.05)', // subtle separator for professional look
+        py: 0,
+        minHeight: 'auto',
       }}
     >
-      <Container maxWidth="lg">
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-            }}
-          >
-            {!logoError ? (
-              <Box
-                component="img"
-                src={logoSrc}
-                alt="DreamTrip logo"
-                onError={() => {
-                  if (logoIndex < logoSources.length - 1) {
-                    setLogoIndex((prev) => prev + 1);
-                    return;
-                  }
-                  console.warn('Logo failed to load, using fallback.');
-                  setLogoError(true);
-                }}
-                sx={{
-                  maxHeight: { xs: 35, md: 45 },
-                  width: 'auto',
-                  backgroundColor: 'transparent',
-                  mixBlendMode: 'multiply',
-                  filter: 'drop-shadow(0 6px 16px rgba(15, 23, 42, 0.12))',
-                }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                <FlightTakeoff sx={{ color: '#2563eb' }} />
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: '#0f172a',
-                    fontFamily: '"Poppins", "Inter", sans-serif',
-                  }}
-                >
-                  DreamTrip
-                </Typography>
-              </Box>
-            )}
-          </Box>
-
+      <Container 
+        maxWidth="lg"
+        sx={{ 
+          px: { xs: 2, sm: 3 }
+        }}
+      >
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          py: { xs: 1, sm: 1.25 },  // comfortable padding (8-10px)
+        }}>
+          {!logoError ? (
+            <Box
+              component="img"
+              src={logoSrc}
+              alt="DreamTrip logo"
+              onError={() => {
+                if (logoIndex < logoSources.length - 1) {
+                  setLogoIndex((prev) => prev + 1);
+                  return;
+                }
+                console.warn('Logo failed to load, using fallback.');
+                setLogoError(true);
+              }}
+              loading="eager"
+              sx={{
+                maxHeight: { xs: 40, sm: 48, md: 56 },  // ← REDUCED: professional logo size
+                width: 'auto',
+                maxWidth: { xs: 160, sm: 200, md: 240 },  // ← REDUCED: proportional
+                display: 'block',
+                backgroundColor: 'transparent',
+                p: 0,
+                borderRadius: 0,
+                boxShadow: 'none',
+                imageRendering: 'auto',
+              }}
+            />
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <FlightTakeoff sx={{ color: '#2563eb', fontSize: 32 }} />
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                DreamTrip
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Container>
     </AppBar>
