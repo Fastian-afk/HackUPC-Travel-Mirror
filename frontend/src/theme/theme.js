@@ -164,7 +164,7 @@ const getTheme = () => createTheme({
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
-        backgroundColor: '#faf9f6',
+        backgroundColor: '#f0f9ff',  
       },
       contentArea: {
         flexGrow: 1,

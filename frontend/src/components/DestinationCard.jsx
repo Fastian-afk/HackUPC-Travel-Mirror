@@ -6,12 +6,10 @@ import {
   Typography,
   Box,
   Chip,
-  useTheme,
 } from '@mui/material';
 import { LocationOn, FavoriteBorder, Favorite } from '@mui/icons-material';
 
 const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
-  const theme = useTheme();
   const [isHovered, setIsHovered] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -20,52 +18,164 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
   const handleLikeClick = (e) => {
     e.stopPropagation();
     setIsLiked(!isLiked);
-    if (onLike) {
-      onLike(destination);
-    }
+    if (onLike) onLike(destination);
   };
 
+  // ========== FEATURED CARD ==========
+  if (isFeatured) {
+    return (
+      <Card
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        sx={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          minHeight: { xs: 'auto', sm: '200px', md: '220px' },
+          borderRadius: '16px',
+          overflow: 'hidden',
+          border: '1px solid rgba(59, 130, 246, 0.2)',
+          boxShadow: isHovered 
+            ? '0 12px 24px rgba(59, 130, 246, 0.15)' 
+            : '0 2px 8px rgba(0, 0, 0, 0.04)',
+          transition: 'all 0.3s ease',
+          cursor: 'pointer',
+          backgroundColor: '#ffffff',
+          '&:hover': { transform: 'translateY(-3px)' },
+        }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            width: { xs: '100%', sm: '35%' },
+            minHeight: { xs: '160px', sm: '200px', md: '220px' },
+            backgroundColor: '#f1f5f9',
+          }}
+        >
+          <CardMedia
+            component="img"
+            image={destination.image}
+            alt={destination.name}
+            onLoad={() => setImageLoaded(true)}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transition: 'transform 0.3s ease',
+              transform: isHovered ? 'scale(1.02)' : 'scale(1)',
+              opacity: imageLoaded ? 1 : 0,
+            }}
+          />
+          
+          <Box
+            onClick={handleLikeClick}
+            sx={{
+              position: 'absolute',
+              top: 10,
+              right: 10,
+              width: 30,
+              height: 30,
+              borderRadius: '50%',
+              backgroundColor: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+              '&:hover': { transform: 'scale(1.1)' },
+              zIndex: 2,
+            }}
+          >
+            {isLiked ? (
+              <Favorite sx={{ fontSize: '14px', color: '#ef4444' }} />
+            ) : (
+              <FavoriteBorder sx={{ fontSize: '14px', color: '#64748b' }} />
+            )}
+          </Box>
+
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 10,
+              left: 10,
+              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+              color: 'white',
+              padding: '3px 10px',
+              borderRadius: '16px',
+              fontSize: '0.65rem',
+              fontWeight: 600,
+              zIndex: 2,
+            }}
+          >
+            TOP PICK
+          </Box>
+        </Box>
+
+        <CardContent sx={{ flex: 1, p: 2 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: '1rem', mb: 0.5, color: '#0f172a' }}>
+            {destination.name}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+            <LocationOn sx={{ fontSize: '12px', color: '#3b82f6' }} />
+            <Typography sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+              {destination.country}
+            </Typography>
+          </Box>
+          
+          {destination.description && (
+            <Typography sx={{ fontSize: '0.7rem', color: '#475569', lineHeight: 1.4, mb: 1 }}>
+              {destination.description.length > 80 
+                ? `${destination.description.slice(0, 80)}...` 
+                : destination.description}
+            </Typography>
+          )}
+          
+          {destination.tags && destination.tags.length > 0 && (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {destination.tags.slice(0, 3).map((tag, idx) => (
+                <Chip 
+                  key={idx} 
+                  label={tag} 
+                  size="small" 
+                  sx={{ 
+                    fontSize: '0.6rem', 
+                    height: '22px',
+                    backgroundColor: '#eef2ff',
+                    color: '#3b82f6',
+                  }} 
+                />
+              ))}
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // ========== DEFAULT CARD - LARGER & MORE READABLE ==========
   return (
     <Card
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       sx={{
-        maxWidth: '100%',
         width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: { xs: 'column', sm: isFeatured ? 'row' : 'column' },
-        ...(isFeatured && {
-          minHeight: { xs: 'auto', sm: '400px', md: '460px' },
-        }),
-        borderRadius: '24px',
+        borderRadius: '14px',
         overflow: 'hidden',
         border: '1px solid rgba(226, 232, 240, 0.5)',
-        boxShadow: isHovered
-          ? '0 20px 40px rgba(37, 99, 235, 0.15)'
-          : '0 4px 12px rgba(15, 23, 42, 0.06)',
-        transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        position: 'relative',
+        boxShadow: isHovered ? '0 6px 14px rgba(0, 0, 0, 0.08)' : '0 1px 3px rgba(0, 0, 0, 0.04)',
+        transition: 'all 0.25s ease',
         cursor: 'pointer',
         backgroundColor: '#ffffff',
+        '&:hover': {
+          transform: 'translateY(-3px)',
+          borderColor: '#3b82f6',
+          boxShadow: '0 8px 18px rgba(59, 130, 246, 0.12)',
+        },
       }}
     >
-      {/* Image Container */}
-      <Box
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          width: isFeatured ? { xs: '100%', sm: '50%' } : '100%',
-          aspectRatio: isFeatured ? { xs: '16/9', sm: '4/3' } : '16/9',
-          flexShrink: 0,
-          backgroundColor: '#e2e8f0',
-          ...(isFeatured && {
-            minHeight: { sm: '400px', md: '460px' },
-            aspectRatio: { sm: 'auto' },
-          }),
-        }}
-      >
+      {/* Image - Square */}
+      <Box sx={{ position: 'relative', aspectRatio: '1/1', backgroundColor: '#f8fafc' }}>
         <CardMedia
           component="img"
           image={destination.image}
@@ -75,33 +185,21 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            transition: 'transform 0.4s ease-out, opacity 0.3s ease-in',
-            transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+            transition: 'transform 0.3s ease',
+            transform: isHovered ? 'scale(1.03)' : 'scale(1)',
             opacity: imageLoaded ? 1 : 0,
           }}
         />
-
-        {/* Overlay on hover */}
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            background: isHovered
-              ? 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(15,23,42,0.3) 100%)'
-              : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, transparent 100%)',
-            transition: 'all 0.3s ease',
-          }}
-        />
-
+        
         {/* Like Button */}
         <Box
           onClick={handleLikeClick}
           sx={{
             position: 'absolute',
-            top: 12,
-            right: 12,
-            width: 32,
-            height: 32,
+            top: 8,
+            right: 8,
+            width: 28,
+            height: 28,
             borderRadius: '50%',
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
             display: 'flex',
@@ -109,154 +207,61 @@ const DestinationCard = ({ destination, onLike, variant = 'default' }) => {
             justifyContent: 'center',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            transform: isLiked ? 'scale(1.1)' : 'scale(1)',
-            '&:hover': {
-              backgroundColor: '#ffffff',
-              transform: 'scale(1.1)',
-            },
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            '&:hover': { transform: 'scale(1.1)' },
             zIndex: 2,
           }}
         >
           {isLiked ? (
-            <Favorite sx={{ fontSize: '18px', color: '#ef4444' }} />
+            <Favorite sx={{ fontSize: '12px', color: '#ef4444' }} />
           ) : (
-            <FavoriteBorder sx={{ fontSize: '18px', color: '#cbd5e1' }} />
+            <FavoriteBorder sx={{ fontSize: '12px', color: '#64748b' }} />
           )}
         </Box>
-
-        {/* Featured Badge */}
-        {isFeatured && (
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 16,
-              left: 16,
-              backgroundColor: 'rgba(37, 99, 235, 0.9)',
-              backdropFilter: 'blur(4px)',
-              color: 'white',
-              padding: '6px 16px',
-              borderRadius: '24px',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              letterSpacing: '0.5px',
-              zIndex: 2,
-            }}
-          >
-            BEST MATCH
-          </Box>
-        )}
       </Box>
 
-      {/* Content - WITH PROFESSIONAL TEXT WRAPPING */}
-      <CardContent
-        sx={{
-          flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          p: isFeatured ? { xs: 2.5, sm: 4 } : 2,
-          width: isFeatured ? { xs: '100%', sm: '50%' } : '100%',
-          minWidth: 0,
-          // Professional text wrapping
-          wordWrap: 'break-word',
-          overflowWrap: 'break-word',
-        }}
-      >
-        {/* Title with Location */}
-        <Box sx={{ mb: 1.5 }}>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontWeight: 700,
-              color: '#0f172a',
-              fontSize: isFeatured ? { xs: '1.4rem', sm: '1.8rem' } : '1rem',
-              lineHeight: 1.3,
-              mb: 1,
-              // Professional text wrapping for long titles
-              wordBreak: 'break-word',
-              whiteSpace: 'normal',
-              overflowWrap: 'break-word',
-              hyphens: 'auto',
-            }}
-          >
-            {destination.name}
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <LocationOn sx={{ fontSize: isFeatured ? '20px' : '16px', color: '#2563eb', flexShrink: 0 }} />
-            <Typography
-              variant="body2"
-              sx={{
-                color: '#64748b',
-                fontSize: isFeatured ? '1rem' : '0.8rem',
-                wordBreak: 'break-word',
-                whiteSpace: 'normal',
-              }}
-            >
-              {destination.country}
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Description - Professional text wrapping with ellipsis */}
-        <Typography
-          variant="body2"
-          sx={{
-            color: '#475569',
-            mb: 2.5,
-            lineHeight: 1.6,
-            display: '-webkit-box',
-            WebkitLineClamp: isFeatured ? 3 : 2,
-            WebkitBoxOrient: 'vertical',
+      {/* Content - Larger */}
+      <CardContent sx={{ p: 1.2 }}>
+        <Typography 
+          sx={{ 
+            fontWeight: 600, 
+            fontSize: '0.85rem', 
+            mb: 0.5,
+            color: '#0f172a',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            fontSize: isFeatured ? '0.95rem' : '0.8rem',
-            // Professional text wrapping
-            wordBreak: 'break-word',
-            whiteSpace: 'normal',
-            overflowWrap: 'break-word',
+            whiteSpace: 'nowrap',
           }}
         >
-          {destination.description}
+          {destination.name}
         </Typography>
-
-        {/* Tags - Responsive wrapping */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 1,
-            mt: 'auto',
-          }}
-        >
-          {(isFeatured ? destination.tags.slice(0, 4) : destination.tags.slice(0, 3)).map((tag, index) => (
-            <Chip
-              key={index}
-              label={tag}
-              size={isFeatured ? "medium" : "small"}
-              sx={{
-                backgroundColor: '#f1f5f9',
-                color: '#2563eb',
-                fontWeight: 500,
-                fontSize: isFeatured ? '0.8rem' : '0.7rem',
-                height: isFeatured ? '32px' : '24px',
-                borderRadius: isFeatured ? '16px' : '12px',
-                // Professional chip text handling
-                maxWidth: '100%',
-                '& .MuiChip-label': {
-                  whiteSpace: 'normal',
-                  wordBreak: 'break-word',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  px: 1.5,
-                },
-                '&:hover': {
-                  backgroundColor: '#e0e7ff',
-                },
-              }}
-            />
-          ))}
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
+          <LocationOn sx={{ fontSize: '10px', color: '#94a3b8' }} />
+          <Typography sx={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+            {destination.country}
+          </Typography>
         </Box>
+
+        {/* Tags - Larger */}
+        {destination.tags && destination.tags.length > 0 && (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {destination.tags.slice(0, 2).map((tag, idx) => (
+              <Chip 
+                key={idx} 
+                label={tag} 
+                size="small" 
+                sx={{ 
+                  fontSize: '0.6rem', 
+                  height: '22px',
+                  backgroundColor: '#f1f5f9',
+                  color: '#64748b',
+                  '& .MuiChip-label': { px: 0.8 },
+                }} 
+              />
+            ))}
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

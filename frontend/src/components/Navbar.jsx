@@ -25,9 +25,9 @@ const Navbar = () => {
         right: 0,
         width: '100%',
         zIndex: 1200,
-        backgroundColor: 'white',
+        backgroundColor: '#e6f0fa',
+        borderBottom: '1px solid rgba(37, 99, 235, 0.15)', // ADD THIS
         boxShadow: 'none',
-        borderBottom: '1px solid rgba(0, 0, 0, 0.05)', // subtle separator for professional look
         py: 0,
         minHeight: 'auto',
       }}
