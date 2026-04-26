@@ -1,10 +1,10 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
-from  ai.voice_service import transcribe_speech
+from  ai.voice_service import transcribe_speech, generate_speech
 
 from ai.emb import load_model, load_data, query_system
 
@@ -12,6 +12,7 @@ import os
 from dotenv import load_dotenv
 from google import genai
 import json
+import base64
 
 # ------------------------
 # App
@@ -68,6 +69,10 @@ class AudioRecommendResponse(BaseModel):
     query: str
     interpreted: List[str]
     results: List[Destination]
+    questions: List[str] = []
+    requires_followup: bool = False
+    session_sentences: List[str] = []
+    tts_audio_base64: Optional[str] = None
 
 
 # ------------------------
@@ -122,11 +127,33 @@ class AudioRecommendResponse(BaseModel):
 
 #     return results
 
-def fake_ai(query: str):
+def _safe_parse_json(text: str):
     try:
-        model = load_model()
-        metadata, embeddings = load_data("ai/city_embeddings.json", "ai/city_embeddings.npy")
+        return json.loads(text)
+    except Exception:
+        return {}
 
+
+def _normalize_sentences(items):
+    if not isinstance(items, list):
+        items = [items]
+
+    normalized = []
+    seen = set()
+    for item in items:
+        s = str(item or "").strip()
+        if not s:
+            continue
+        key = s.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(s)
+    return normalized
+
+
+def parse_travel_intent(query: str):
+    try:
         load_dotenv()
         api_key = os.getenv("GOOGLE_API_KEY")
         client = genai.Client(api_key=api_key)
@@ -143,22 +170,45 @@ def fake_ai(query: str):
         )
 
         raw = response.text.strip()
-        parsed = json.loads(raw)
+        parsed = _safe_parse_json(raw)
 
-        sentences = parsed.get("sentences", [])
-
-        if not isinstance(sentences, list):
-            sentences = [sentences]
+        sentences = _normalize_sentences(parsed.get("sentences", []))
+        questions = _normalize_sentences(parsed.get("questions", []))[:2]
 
         if len(sentences) == 0:
             sentences = [query]
 
-        results = query_system(model, embeddings, metadata, sentences, k=5)
+        return {
+            "sentences": sentences,
+            "questions": questions,
+        }
+
+    except Exception as e:
+        print("❌ parse_travel_intent ERROR:", e)
+        return {
+            "sentences": [query],
+            "questions": [],
+        }
+
+
+def run_recommendations(sentences: List[str]):
+    model = load_model()
+    metadata, embeddings = load_data("ai/city_embeddings.json", "ai/city_embeddings.npy")
+    results = query_system(model, embeddings, metadata, sentences, k=5)
+    return results if results is not None else []
+
+
+def fake_ai(query: str):
+    try:
+        parsed = parse_travel_intent(query)
+        sentences = parsed.get("sentences", [query])
+        results = run_recommendations(sentences)
 
         # 🚨 ALWAYS RETURN VALID STRUCTURE
         return {
             "interpreted": sentences,
-            "results": results if results is not None else []
+            "results": results,
+            "questions": parsed.get("questions", []),
         }
 
     except Exception as e:
@@ -167,7 +217,8 @@ def fake_ai(query: str):
         # 🚨 FAIL SAFE (CRITICAL)
         return {
             "interpreted": [query],
-            "results": []
+            "results": [],
+            "questions": [],
         }
 
 
@@ -183,10 +234,18 @@ def recommend(req: RecommendRequest):
     # return {
     #     "results": results
     # }
-    return fake_ai(req.query)
+    rec = fake_ai(req.query)
+    return {
+        "interpreted": rec.get("interpreted", [req.query]),
+        "results": rec.get("results", []),
+    }
 
 @app.post("/recommend-audio", response_model=AudioRecommendResponse)
-async def recommend_audio(file: UploadFile = File(...)):
+async def recommend_audio(
+    file: UploadFile = File(...),
+    prior_sentences: str = Form(default="[]"),
+    turn: int = Form(default=1),
+):
     print("🔥 AUDIO ENDPOINT HIT")
     try:
         audio_bytes = await file.read()
@@ -202,13 +261,57 @@ async def recommend_audio(file: UploadFile = File(...)):
                 "query": "",
                 "interpreted": [],
                 "results": [],
+                "questions": [],
+                "requires_followup": False,
+                "session_sentences": [],
+                "tts_audio_base64": None,
             }
 
-        rec = fake_ai(text)
+        try:
+            prior = _normalize_sentences(json.loads(prior_sentences or "[]"))
+        except Exception:
+            prior = []
+
+        parsed = parse_travel_intent(text)
+        current_sentences = parsed.get("sentences", [text])
+        questions = parsed.get("questions", [])
+
+        combined = _normalize_sentences(prior + current_sentences)
+        has_prior_context = bool(prior) or int(turn) > 1
+
+        # First turn: ask follow-up questions and speak them.
+        if (not has_prior_context) and questions:
+            tts_audio_base64 = None
+            try:
+                speech_text = " ".join(questions)
+                if speech_text:
+                    audio_out = await generate_speech(speech_text)
+                    tts_audio_base64 = base64.b64encode(audio_out).decode("ascii")
+            except Exception as tts_error:
+                print("⚠️ TTS generation failed:", tts_error)
+
+            response = {
+                "query": text,
+                "interpreted": current_sentences,
+                "results": [],
+                "questions": questions,
+                "requires_followup": True,
+                "session_sentences": combined,
+                "tts_audio_base64": tts_audio_base64,
+            }
+            print("✅ RETURNING INTERACTIVE TURN:", response)
+            return response
+
+        # Final turn: merge previous + current sentences and run normal pipeline.
+        results = run_recommendations(combined or [text])
         response = {
             "query": text,
-            "interpreted": rec.get("interpreted", []),
-            "results": rec.get("results", []),
+            "interpreted": combined or [text],
+            "results": results,
+            "questions": [],
+            "requires_followup": False,
+            "session_sentences": combined or [text],
+            "tts_audio_base64": None,
         }
 
         print("✅ RETURNING:", response)

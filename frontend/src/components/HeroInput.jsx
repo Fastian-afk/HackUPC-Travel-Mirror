@@ -14,6 +14,8 @@ const HERO_IMAGE =
 const HeroInput = ({ onSubmit, onAudioResult, onAudioError, isLoading, query, setQuery, error }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isAudioProcessing, setIsAudioProcessing] = useState(false);
+  const [followupQuestions, setFollowupQuestions] = useState([]);
+  const [sessionSentences, setSessionSentences] = useState([]);
 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -33,6 +35,8 @@ const submitQuery = async (textOverride = null, audioOverride = null) => {
       setIsAudioProcessing(true);
       const formData = new FormData();
       formData.append("file", audioOverride, "recording.webm");
+      formData.append("prior_sentences", JSON.stringify(sessionSentences || []));
+      formData.append("turn", sessionSentences.length > 0 ? "2" : "1");
 
       const res = await fetch("http://localhost:8000/recommend-audio", {
         method: "POST",
@@ -59,6 +63,23 @@ const submitQuery = async (textOverride = null, audioOverride = null) => {
         setQuery(newQuery);
       }
 
+      if (data.requires_followup) {
+        setSessionSentences(data.session_sentences || []);
+        setFollowupQuestions(data.questions || []);
+
+        const ttsB64 = data.tts_audio_base64;
+        if (ttsB64) {
+          const audio = new Audio(`data:audio/mpeg;base64,${ttsB64}`);
+          audio.play().catch((playErr) => {
+            console.error("TTS playback failed:", playErr);
+          });
+        }
+        return;
+      }
+
+      setSessionSentences([]);
+      setFollowupQuestions([]);
+
       if (onAudioResult) {
         onAudioResult(data);
       } else if (newQuery) {
@@ -72,6 +93,8 @@ const submitQuery = async (textOverride = null, audioOverride = null) => {
     const finalQuery = textOverride ?? query;
 
     if (finalQuery && finalQuery.trim().length > 0) {
+      setSessionSentences([]);
+      setFollowupQuestions([]);
       onSubmit(finalQuery); // 🔥 ALWAYS pass query up
     }
   } catch (err) {
@@ -219,6 +242,31 @@ const submitQuery = async (textOverride = null, audioOverride = null) => {
             <Typography sx={{ mt: 2, color: '#00D4FF' }}>
               Processing audio...
             </Typography>
+          )}
+
+          {followupQuestions.length > 0 && (
+            <Box
+              sx={{
+                mt: 2,
+                px: 2,
+                py: 1.5,
+                borderRadius: 2,
+                backgroundColor: 'rgba(15, 23, 42, 0.55)',
+                textAlign: 'left',
+              }}
+            >
+              <Typography sx={{ fontWeight: 700, mb: 1 }}>
+                Follow-up questions:
+              </Typography>
+              {followupQuestions.map((q, i) => (
+                <Typography key={`${q}-${i}`} sx={{ mb: 0.5 }}>
+                  {i + 1}. {q}
+                </Typography>
+              ))}
+              <Typography sx={{ mt: 1, color: '#bfdbfe' }}>
+                Tap the mic again, answer naturally, then tap again to finish.
+              </Typography>
+            </Box>
           )}
 
           {error && (
