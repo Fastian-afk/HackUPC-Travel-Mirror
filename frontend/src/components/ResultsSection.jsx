@@ -70,7 +70,7 @@ const ResultImage = ({ primarySrc, fallbackSources, alt, sx }) => {
   );
 };
 
-const DestinationResultCard = ({ destination, featured = false, onRefine, imageSeed = 1 }) => {
+const DestinationResultCard = ({ destination, featured = false, onRefine, onExplore, imageSeed = 1 }) => {
   // const name = destination?.name || destination?.title || 'Dream destination';
   const name = destination?.city || 'Dream destination';
   // const description = destination?.description || 'A place where your dreams meet reality.';
@@ -197,7 +197,7 @@ const DestinationResultCard = ({ destination, featured = false, onRefine, imageS
 
         <Button
           variant="contained"
-          onClick={() => onRefine(name)}
+          onClick={() => (onExplore ? onExplore(destination) : onRefine(name))}
           sx={{ alignSelf: 'flex-start', minHeight: 36, px: 2.2, py: 0.8, fontSize: '0.86rem' }}
         >
           Explore →
@@ -207,7 +207,7 @@ const DestinationResultCard = ({ destination, featured = false, onRefine, imageS
   );
 };
 
-const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => {
+const ResultsSection = ({ query, results, interpretedTags, error, onReset, onExplore }) => {
   if (!results || results.length === 0) {
     return null;
   }
@@ -288,7 +288,7 @@ const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => 
 
         <Box sx={{ mb: { xs: 2.5, lg: 1.5 }, display: 'flex', justifyContent: 'center' }}>
           <Box sx={{ width: '100%', maxWidth: { xs: 640, lg: 780 } }}>
-            <DestinationResultCard destination={featuredResult} featured imageSeed={1} />
+            <DestinationResultCard destination={featuredResult} featured onExplore={onExplore} imageSeed={1} />
           </Box>
         </Box>
 
@@ -303,7 +303,7 @@ const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => 
           >
             {firstPair.map((destination, index) => (
               <Box key={`pair-one-${index}`} sx={{ display: 'flex', minWidth: 0 }}>
-                <DestinationResultCard destination={destination} imageSeed={index + 2} />
+                <DestinationResultCard destination={destination} onExplore={onExplore} imageSeed={index + 2} />
               </Box>
             ))}
           </Box>
@@ -317,7 +317,7 @@ const ResultsSection = ({ query, results, interpretedTags, error, onReset }) => 
           >
             {secondPair.map((destination, index) => (
               <Box key={`pair-two-${index}`} sx={{ display: 'flex', minWidth: 0 }}>
-                <DestinationResultCard destination={destination} imageSeed={index + 4} />
+                <DestinationResultCard destination={destination} onExplore={onExplore} imageSeed={index + 4} />
               </Box>
             ))}
           </Box>

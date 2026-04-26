@@ -13,6 +13,19 @@ from dotenv import load_dotenv
 from google import genai
 import json
 import base64
+from datetime import date, timedelta
+from urllib import request as urlrequest
+from urllib.error import HTTPError, URLError
+
+from ai.config import (
+    DEFAULT_ADULTS,
+    DEFAULT_CABIN_CLASS,
+    DEFAULT_CURRENCY,
+    DEFAULT_LOCALE,
+    DEFAULT_MARKET,
+    DEFAULT_ORIGIN,
+    SKYSCANNER_API_KEY,
+)
 
 # ------------------------
 # App
@@ -73,6 +86,84 @@ class AudioRecommendResponse(BaseModel):
     requires_followup: bool = False
     session_sentences: List[str] = []
     tts_audio_base64: Optional[str] = None
+
+
+class FlightSearchRequest(BaseModel):
+    origin_iata: str = DEFAULT_ORIGIN
+    destination_iata: str
+    year: Optional[int] = None
+    month: Optional[int] = None
+    day: Optional[int] = None
+    return_year: Optional[int] = None
+    return_month: Optional[int] = None
+    return_day: Optional[int] = None
+    adults: int = DEFAULT_ADULTS
+    market: str = DEFAULT_MARKET
+    locale: str = DEFAULT_LOCALE
+    currency: str = DEFAULT_CURRENCY
+    cabin_class: str = DEFAULT_CABIN_CLASS
+
+
+class FlightTicket(BaseModel):
+    airline: str
+    price: float
+    origin: str
+    destination: str
+    departure: str
+    arrival: str
+
+
+class FlightSearchResponse(BaseModel):
+    origin_iata: str
+    destination_iata: str
+    date: str
+    tickets: List[FlightTicket]
+
+
+def extract_flights(data):
+    results = []
+
+    content = data.get("content", {})
+    search_results = content.get("results", {})
+    itineraries = search_results.get("itineraries", {})
+    legs = search_results.get("legs", {})
+    carriers = search_results.get("carriers", {})
+    places = search_results.get("places", {})
+
+    for itinerary in itineraries.values():
+        leg_ids = itinerary.get("legIds", [])
+        if not leg_ids:
+            continue
+
+        leg = legs.get(leg_ids[0])
+        if not leg:
+            continue
+
+        departure = leg.get("departureDateTime", {})
+        arrival = leg.get("arrivalDateTime", {})
+
+        origin_place = places.get(leg.get("originPlaceId"), {})
+        destination_place = places.get(leg.get("destinationPlaceId"), {})
+
+        carrier_ids = leg.get("marketingCarrierIds", [])
+        carrier_id = carrier_ids[0] if carrier_ids else None
+        airline = carriers.get(carrier_id, {}).get("name", "Unknown airline")
+
+        pricing_options = itinerary.get("pricingOptions", [])
+        price = 0.0
+        if pricing_options:
+            price = float(pricing_options[0].get("price", {}).get("amount", 0)) / 1000
+
+        results.append({
+            "airline": airline,
+            "price": price,
+            "origin": origin_place.get("name", "Unknown origin"),
+            "destination": destination_place.get("name", "Unknown destination"),
+            "departure": f"{departure.get('hour', 0):02d}:{departure.get('minute', 0):02d}",
+            "arrival": f"{arrival.get('hour', 0):02d}:{arrival.get('minute', 0):02d}",
+        })
+
+    return results
 
 
 # ------------------------
@@ -198,6 +289,66 @@ def run_recommendations(sentences: List[str]):
     return results if results is not None else []
 
 
+def fetch_skyscanner_tickets(payload: FlightSearchRequest):
+    if not SKYSCANNER_API_KEY:
+        raise RuntimeError("SKYSCANNER_API_KEY is not set. Add it to backend/ai/.env.")
+
+    travel_date = date.today() + timedelta(days=30)
+    if payload.year and payload.month and payload.day:
+        travel_date = date(payload.year, payload.month, payload.day)
+
+    url = "https://partners.api.skyscanner.net/apiservices/v3/flights/live/search/create"
+    request_body = {
+        "query": {
+            "market": payload.market,
+            "locale": payload.locale,
+            "currency": payload.currency,
+            "adults": payload.adults,
+            "cabinClass": payload.cabin_class,
+            "queryLegs": [
+                {
+                    "originPlaceId": {"iata": payload.origin_iata},
+                    "destinationPlaceId": {"iata": payload.destination_iata},
+                    "date": {
+                        "year": travel_date.year,
+                        "month": travel_date.month,
+                        "day": travel_date.day,
+                    },
+                }
+            ],
+        }
+    }
+
+    headers = {
+        "x-api-key": SKYSCANNER_API_KEY,
+        "Content-Type": "application/json",
+    }
+
+    req = urlrequest.Request(
+        url=url,
+        data=json.dumps(request_body).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+
+    try:
+        with urlrequest.urlopen(req, timeout=60) as response:
+            response_json = json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        raise RuntimeError(
+            f"Skyscanner request failed ({exc.code}): {exc.read().decode('utf-8', errors='ignore')}"
+        )
+    except URLError as exc:
+        raise RuntimeError(f"Skyscanner request failed: {exc.reason}")
+
+    return {
+        "origin_iata": payload.origin_iata,
+        "destination_iata": payload.destination_iata,
+        "date": travel_date.isoformat(),
+        "tickets": extract_flights(response_json),
+    }
+
+
 def fake_ai(query: str):
     try:
         parsed = parse_travel_intent(query)
@@ -320,6 +471,15 @@ async def recommend_audio(
 
     except Exception as e:
         print("❌ ERROR:", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/flights/search", response_model=FlightSearchResponse)
+def flights_search(payload: FlightSearchRequest):
+    try:
+        return fetch_skyscanner_tickets(payload)
+    except Exception as e:
+        print("❌ flights_search ERROR:", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 # ------------------------

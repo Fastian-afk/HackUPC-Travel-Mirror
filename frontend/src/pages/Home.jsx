@@ -3,7 +3,7 @@ import HeroInput from "../components/HeroInput";
 import LoadingState from "../components/LoadingState";
 import ResultsSection from "../components/ResultsSection";
 
-function Home() {
+function Home({ onExplore }) {
   console.log("HOME MOUNT");
 
   // ------------------------
@@ -127,6 +127,7 @@ const handleSubmit = (userQuery) => {
           interpretedTags={interpreted}
           error={error}
           onRefine={handleRefine}
+          onExplore={onExplore}
           onReset={handleReset}
         />
       )}
